@@ -7,7 +7,7 @@ from rest_framework import status, permissions
 from drf_spectacular.utils import extend_schema
 
 User = get_user_model()
-from .serializers import UserRegistrationSerializer, UserSerializer
+from .serializers import UserRegistrationSerializer, UserSerializer, ProfileUpdateSerializer
 from .services import UserService
 
 class MeView(APIView):
@@ -17,6 +17,14 @@ class MeView(APIView):
     def get(self, request):
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+    @extend_schema(tags=['Auth'], request=ProfileUpdateSerializer, responses={200: UserSerializer})
+    def patch(self, request):
+        serializer = ProfileUpdateSerializer(request.user.profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(UserSerializer(request.user).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     @extend_schema(tags=['Auth'])
@@ -98,7 +106,9 @@ class RegisterView(APIView):
                 password=serializer.validated_data['password'],
                 full_name=serializer.validated_data['full_name'],
                 identification=serializer.validated_data['identification'],
-                role=serializer.validated_data.get('role')
+                role=serializer.validated_data.get('role'),
+                phone_number=serializer.validated_data.get('phone_number'),
+                profile_picture=serializer.validated_data.get('profile_picture')
             )
             
             refresh = RefreshToken.for_user(user)

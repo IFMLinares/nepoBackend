@@ -9,6 +9,11 @@ class ProfileSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['full_name', 'identification', 'phone_number', 'profile_picture', 'representative']
 
+class ProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['full_name', 'identification', 'phone_number', 'profile_picture']
+
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)
@@ -22,11 +27,13 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True)
     full_name = serializers.CharField()
     identification = serializers.CharField()
+    phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    profile_picture = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirm', 'full_name', 'identification', 'role']
+        fields = ['username', 'email', 'password', 'password_confirm', 'full_name', 'identification', 'role', 'phone_number', 'profile_picture']
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:
