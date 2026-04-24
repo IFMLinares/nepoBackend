@@ -5,14 +5,16 @@ from .models import Profile
 User = get_user_model()
 
 class ProfileSerializer(serializers.ModelSerializer):
+    age = serializers.ReadOnlyField()
+
     class Meta:
         model = Profile
-        fields = ['full_name', 'identification', 'phone_number', 'profile_picture', 'representative']
+        fields = ['full_name', 'identification', 'phone_number', 'profile_picture', 'date_of_birth', 'age', 'representative']
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['full_name', 'identification', 'phone_number', 'profile_picture']
+        fields = ['full_name', 'identification', 'phone_number', 'profile_picture', 'date_of_birth']
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
@@ -29,11 +31,16 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     identification = serializers.CharField()
     phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     profile_picture = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    date_of_birth = serializers.DateField(required=False, allow_null=True)
     role = serializers.ChoiceField(choices=User.Role.choices, default=User.Role.STUDENT)
 
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirm', 'full_name', 'identification', 'role', 'phone_number', 'profile_picture']
+        fields = [
+            'username', 'email', 'password', 'password_confirm', 
+            'full_name', 'identification', 'role', 'phone_number', 
+            'profile_picture', 'date_of_birth'
+        ]
 
     def validate(self, data):
         if data['password'] != data['password_confirm']:

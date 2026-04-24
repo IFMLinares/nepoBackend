@@ -9,6 +9,7 @@ from drf_spectacular.utils import extend_schema
 User = get_user_model()
 from .serializers import UserRegistrationSerializer, UserSerializer, ProfileUpdateSerializer
 from .services import UserService
+from .permissions import IsAdmin
 
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -108,7 +109,8 @@ class RegisterView(APIView):
                 identification=serializer.validated_data['identification'],
                 role=serializer.validated_data.get('role'),
                 phone_number=serializer.validated_data.get('phone_number'),
-                profile_picture=serializer.validated_data.get('profile_picture')
+                profile_picture=serializer.validated_data.get('profile_picture'),
+                date_of_birth=serializer.validated_data.get('date_of_birth')
             )
             
             refresh = RefreshToken.for_user(user)
@@ -119,3 +121,43 @@ class RegisterView(APIView):
             }
             return Response(response_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UserListView(APIView):
+    permission_classes = [IsAdmin]
+
+    @extend_schema(
+        tags=['Users'],
+        responses={200: UserSerializer(many=True)},
+        parameters=[
+            {
+                'name': 'role',
+                'type': 'string',
+                'location': 'query',
+                'description': 'Filtrar usuarios por rol (ADMIN, COACH, REPRESENTATIVE, STUDENT)',
+                'required': False
+            }
+        ]
+    )
+    def get(self, request):
+        role = request.query_params.get('role')
+        users = User.objects.all().select_related('profile')
+        
+        if role:
+            users = users.filter(role=role)
+            
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+class RoleListView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        tags=['Users'],
+        responses={200: dict}
+    )
+    def get(self, request):
+        roles = [
+            {'value': choice[0], 'label': choice[1]} 
+            for choice in User.Role.choices
+        ]
+        return Response(roles)

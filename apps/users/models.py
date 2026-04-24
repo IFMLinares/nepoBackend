@@ -1,4 +1,5 @@
 from django.db import models
+from datetime import date
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 class UserManager(BaseUserManager):
@@ -50,6 +51,7 @@ class Profile(models.Model):
     identification = models.CharField(max_length=50, unique=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.CharField(max_length=255, blank=True, null=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     
     # Relación Estudiante -> Representante
     representative = models.ForeignKey(
@@ -66,3 +68,10 @@ class Profile(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.user.username})"
+
+    @property
+    def age(self):
+        if not self.date_of_birth:
+            return None
+        today = date.today()
+        return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
