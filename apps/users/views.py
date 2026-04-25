@@ -110,7 +110,8 @@ class RegisterView(APIView):
                 role=serializer.validated_data.get('role'),
                 phone_number=serializer.validated_data.get('phone_number'),
                 profile_picture=serializer.validated_data.get('profile_picture'),
-                date_of_birth=serializer.validated_data.get('date_of_birth')
+                date_of_birth=serializer.validated_data.get('date_of_birth'),
+                document_type=serializer.validated_data.get('document_type')
             )
             
             refresh = RefreshToken.for_user(user)

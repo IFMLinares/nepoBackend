@@ -46,8 +46,18 @@ class User(AbstractBaseUser, PermissionsMixin):
         return f"{self.username} ({self.get_role_display()})"
 
 class Profile(models.Model):
+    class DocumentType(models.TextChoices):
+        VENEZUELAN = 'V', 'Venezolano'
+        FOREIGN = 'E', 'Extranjero'
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     full_name = models.CharField(max_length=255)
+    document_type = models.CharField(
+        max_length=1, 
+        choices=DocumentType.choices, 
+        default=DocumentType.VENEZUELAN,
+        verbose_name="Tipo de Documento"
+    )
     identification = models.CharField(max_length=50, unique=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.CharField(max_length=255, blank=True, null=True)

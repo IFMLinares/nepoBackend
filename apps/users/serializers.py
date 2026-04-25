@@ -9,12 +9,15 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ['full_name', 'identification', 'phone_number', 'profile_picture', 'date_of_birth', 'age', 'representative']
+        fields = [
+            'full_name', 'document_type', 'identification', 'phone_number', 
+            'profile_picture', 'date_of_birth', 'age', 'representative'
+        ]
 
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['full_name', 'identification', 'phone_number', 'profile_picture', 'date_of_birth']
+        fields = ['full_name', 'document_type', 'identification', 'phone_number', 'profile_picture', 'date_of_birth']
 
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
@@ -28,6 +31,7 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password_confirm = serializers.CharField(write_only=True)
     full_name = serializers.CharField()
+    document_type = serializers.ChoiceField(choices=Profile.DocumentType.choices, default=Profile.DocumentType.VENEZUELAN)
     identification = serializers.CharField()
     phone_number = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     profile_picture = serializers.CharField(required=False, allow_blank=True, allow_null=True)
@@ -38,8 +42,8 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'username', 'email', 'password', 'password_confirm', 
-            'full_name', 'identification', 'role', 'phone_number', 
-            'profile_picture', 'date_of_birth'
+            'full_name', 'document_type', 'identification', 'role', 
+            'phone_number', 'profile_picture', 'date_of_birth'
         ]
 
     def validate(self, data):
