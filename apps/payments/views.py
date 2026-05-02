@@ -4,29 +4,32 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
 
-from .models import PaymentMethod
-from .serializers import PaymentMethodSerializer
-from .selectors import payment_method_list
+from .models import PaymentMethod, Currency, PaymentType
+from .serializers import PaymentMethodSerializer, CurrencySerializer, PaymentTypeSerializer
+from .selectors import payment_method_list, currency_list, payment_type_list
 from .services import payment_method_create, payment_method_update, payment_method_delete
 from apps.users.permissions import IsAdmin
 
+class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
+    """Listado de monedas disponibles"""
+    serializer_class = CurrencySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = currency_list()
+
+class PaymentTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    """Listado de tipos de pago disponibles"""
+    serializer_class = PaymentTypeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = payment_type_list()
+
 @extend_schema_view(
     list=extend_schema(
-        tags=['Payments'],
+        tags=['Payments Extra config'],
         summary="Listar métodos de pago",
         parameters=[
-            OpenApiParameter(
-                name='method_type', 
-                description='Filtrar por tipo (CARD, CASH, TRANSFER)', 
-                required=False, 
-                type=str
-            ),
-            OpenApiParameter(
-                name='search', 
-                description='Buscar por nombre', 
-                required=False, 
-                type=str
-            ),
+            OpenApiParameter(name='payment_type', description='ID del tipo de pago', required=False, type=int),
+            OpenApiParameter(name='currency', description='ID de la moneda', required=False, type=int),
+            OpenApiParameter(name='search', description='Buscar por nombre', required=False, type=str),
         ]
     ),
     create=extend_schema(tags=['Payments'], summary="Crear método de pago"),
@@ -38,7 +41,7 @@ from apps.users.permissions import IsAdmin
 class PaymentMethodViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentMethodSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter]
-    filterset_fields = ['method_type']
+    filterset_fields = ['payment_type', 'currency']
     search_fields = ['name']
 
     def get_permissions(self):

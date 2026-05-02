@@ -60,7 +60,7 @@ class Profile(models.Model):
     )
     identification = models.CharField(max_length=50, unique=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    profile_picture = models.CharField(max_length=255, blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     
     # Relación Estudiante -> Representante

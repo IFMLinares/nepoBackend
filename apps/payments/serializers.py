@@ -1,13 +1,25 @@
 from rest_framework import serializers
-from .models import PaymentMethod
+from .models import PaymentMethod, Currency, PaymentType
+
+class CurrencySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = ['id', 'name', 'code', 'symbol']
+
+class PaymentTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentType
+        fields = ['id', 'name']
 
 class PaymentMethodSerializer(serializers.ModelSerializer):
-    method_type_display = serializers.CharField(source='get_method_type_display', read_only=True)
+    payment_type_details = PaymentTypeSerializer(source='payment_type', read_only=True)
+    currency_details = CurrencySerializer(source='currency', read_only=True)
 
     class Meta:
         model = PaymentMethod
         fields = [
-            'id', 'name', 'method_type', 'method_type_display', 
+            'id', 'name', 'payment_type', 'payment_type_details',
+            'currency', 'currency_details',
             'details', 'image', 'is_active', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
