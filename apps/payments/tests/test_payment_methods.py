@@ -1,7 +1,9 @@
 import pytest
+import base64
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework import status
-from apps.payments.models import PaymentMethod
+from apps.payments.models import Currency, PaymentMethod, PaymentType
 
 @pytest.mark.django_db
 class TestPaymentMethods:
@@ -27,30 +29,66 @@ class TestPaymentMethods:
         api_client.force_authenticate(user=user)
         return api_client
 
-    def test_create_payment_method_success(self, admin_client):
+    @pytest.fixture
+    def payment_catalogs(self):
+        currency, _ = Currency.objects.get_or_create(
+            code="USD",
+            defaults={"name": "Dólares", "symbol": "$"},
+        )
+        payment_type, _ = PaymentType.objects.get_or_create(name="Transferencia")
+        alternate_type, _ = PaymentType.objects.get_or_create(name="Efectivo")
+        return {
+            "currency": currency,
+            "payment_type": payment_type,
+            "alternate_type": alternate_type,
+        }
+
+    def test_create_payment_method_success(self, admin_client, payment_catalogs):
         url = reverse('paymentmethod-list')
+        image = SimpleUploadedFile(
+            "metodo.png",
+            base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF9sAAAAASUVORK5CYII="
+            ),
+            content_type="image/png",
+        )
         data = {
             "name": "Pago Móvil",
-            "method_type": "TRANSFER",
-            "details": "0412-1234567, Banesco"
+            "payment_type": payment_catalogs["payment_type"].id,
+            "currency": payment_catalogs["currency"].id,
+            "details": "0412-1234567, Banesco",
+            "image": image,
         }
-        response = admin_client.post(url, data)
+        response = admin_client.post(url, data, format="multipart")
         assert response.status_code == status.HTTP_201_CREATED
         assert PaymentMethod.objects.count() == 1
-        assert PaymentMethod.objects.first().name == "Pago Móvil"
+        created_method = PaymentMethod.objects.first()
+        assert created_method.name == "Pago Móvil"
+        assert created_method.image.name.endswith("metodo.png")
 
-    def test_create_payment_method_invalid_data(self, admin_client):
+    def test_create_payment_method_invalid_data(self, admin_client, payment_catalogs):
         url = reverse('paymentmethod-list')
         data = {
             "name": "PM",
-            "method_type": "INVALID_TYPE"
+            "payment_type": payment_catalogs["payment_type"].id,
+            "currency": payment_catalogs["currency"].id,
         }
         response = admin_client.post(url, data)
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_list_active_payment_methods(self, authenticated_client):
-        PaymentMethod.objects.create(name="Activo", method_type="CASH", is_active=True)
-        PaymentMethod.objects.create(name="Inactivo", method_type="CARD", is_active=False)
+    def test_list_active_payment_methods(self, authenticated_client, payment_catalogs):
+        PaymentMethod.objects.create(
+            name="Activo",
+            payment_type=payment_catalogs["payment_type"],
+            currency=payment_catalogs["currency"],
+            is_active=True,
+        )
+        PaymentMethod.objects.create(
+            name="Inactivo",
+            payment_type=payment_catalogs["payment_type"],
+            currency=payment_catalogs["currency"],
+            is_active=False,
+        )
         
         url = reverse('paymentmethod-list')
         response = authenticated_client.get(url)
@@ -59,24 +97,36 @@ class TestPaymentMethods:
         assert len(response.data) == 1
         assert response.data[0]['name'] == "Activo"
 
-    def test_search_and_filter(self, authenticated_client):
-        PaymentMethod.objects.create(name="Banesco", method_type="TRANSFER")
-        PaymentMethod.objects.create(name="Visa", method_type="CARD")
+    def test_search_and_filter(self, authenticated_client, payment_catalogs):
+        PaymentMethod.objects.create(
+            name="Banesco",
+            payment_type=payment_catalogs["payment_type"],
+            currency=payment_catalogs["currency"],
+        )
+        PaymentMethod.objects.create(
+            name="Caja",
+            payment_type=payment_catalogs["alternate_type"],
+            currency=payment_catalogs["currency"],
+        )
         
         url = reverse('paymentmethod-list')
         
         # Test Search
-        response = authenticated_client.get(f"{url}?search=Visa")
+        response = authenticated_client.get(f"{url}?search=Banesco")
         assert len(response.data) == 1
-        assert response.data[0]['name'] == "Visa"
+        assert response.data[0]['name'] == "Banesco"
         
         # Test Filter
-        response = authenticated_client.get(f"{url}?method_type=TRANSFER")
+        response = authenticated_client.get(f"{url}?payment_type={payment_catalogs['payment_type'].id}")
         assert len(response.data) == 1
-        assert response.data[0]['method_type'] == "TRANSFER"
+        assert response.data[0]['payment_type'] == payment_catalogs['payment_type'].id
 
-    def test_soft_delete(self, admin_client):
-        method = PaymentMethod.objects.create(name="Borrar", method_type="CASH")
+    def test_soft_delete(self, admin_client, payment_catalogs):
+        method = PaymentMethod.objects.create(
+            name="Borrar",
+            payment_type=payment_catalogs["payment_type"],
+            currency=payment_catalogs["currency"],
+        )
         url = reverse('paymentmethod-detail', kwargs={'pk': method.pk})
         
         response = admin_client.delete(url)
@@ -85,9 +135,13 @@ class TestPaymentMethods:
         method.refresh_from_db()
         assert method.is_active is False
 
-    def test_create_payment_method_forbidden_for_non_admin(self, authenticated_client):
+    def test_create_payment_method_forbidden_for_non_admin(self, authenticated_client, payment_catalogs):
         url = reverse('paymentmethod-list')
-        data = {"name": "Hack", "method_type": "CASH"}
+        data = {
+            "name": "Hack",
+            "payment_type": payment_catalogs["payment_type"].id,
+            "currency": payment_catalogs["currency"].id,
+        }
         
         response = authenticated_client.post(url, data)
         assert response.status_code == status.HTTP_403_FORBIDDEN
@@ -97,8 +151,12 @@ class TestPaymentMethods:
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_update_payment_method_name_too_short(self, admin_client):
-        method = PaymentMethod.objects.create(name="Efectivo", method_type="CASH")
+    def test_update_payment_method_name_too_short(self, admin_client, payment_catalogs):
+        method = PaymentMethod.objects.create(
+            name="Efectivo",
+            payment_type=payment_catalogs["payment_type"],
+            currency=payment_catalogs["currency"],
+        )
         url = reverse('paymentmethod-detail', kwargs={'pk': method.pk})
         data = {"name": "Ef"} # Menos de 3 caracteres
         

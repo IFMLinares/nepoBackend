@@ -1,5 +1,5 @@
-from rest_framework import viewsets, status, permissions
-from rest_framework.response import Response
+from rest_framework import viewsets, permissions
+from rest_framework.parsers import MultiPartParser, JSONParser
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
@@ -40,6 +40,7 @@ class PaymentTypeViewSet(viewsets.ReadOnlyModelViewSet):
 )
 class PaymentMethodViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentMethodSerializer
+    parser_classes = [MultiPartParser, JSONParser]
     filter_backends = [DjangoFilterBackend, SearchFilter]
     filterset_fields = ['payment_type', 'currency']
     search_fields = ['name']
@@ -55,10 +56,10 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
         return payment_method_list()
 
     def perform_create(self, serializer):
-        payment_method_create(**serializer.validated_data)
+        serializer.instance = payment_method_create(**serializer.validated_data)
 
     def perform_update(self, serializer):
-        payment_method_update(payment_method=self.get_object(), data=serializer.validated_data)
+        serializer.instance = payment_method_update(payment_method=self.get_object(), data=serializer.validated_data)
 
     def perform_destroy(self, instance):
         payment_method_delete(payment_method=instance)
