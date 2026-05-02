@@ -16,6 +16,25 @@ Todos los endpoints (excepto `/register` y `/login`) requieren autenticación.
 | `POST` | `/api/users/logout/` | Limpiar cookies de sesión. |
 | `GET` | `/api/users/me/` | Datos del usuario actual. |
 
+### Endpoints de Pagos (`apps/payments`)
+
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/api/payments/currencies/` | Listado de monedas (USD, VES, etc.). |
+| `GET` | `/api/payments/types/` | Tipos de pago (Transferencia, Pago Móvil, etc.). |
+| `GET/POST` | `/api/payments/methods/` | Gestión de cuentas/métodos de pago (Solo ADMIN crea). |
+
+### Endpoints de Inventario (`apps/inventory`)
+
+| Método | Endpoint | Descripción |
+| :--- | :--- | :--- |
+| `GET/POST` | `/api/inventory/categories/` | Gestión de categorías de productos. |
+| `GET` | `/api/inventory/units-of-measure/` | Listado de unidades (Kg, m, Und). |
+| `GET/POST` | `/api/inventory/products/` | CRUD de productos (Soporta imágenes). |
+
+> [!TIP]
+> Los endpoints de escritura (`POST`, `PUT`, `DELETE`) en Inventario y Pagos están restringidos a usuarios con rol `ADMIN`.
+
 ## 🛡️ Clases de Permiso
 
 En `apps/users/permissions.py` existen clases listas para usar:

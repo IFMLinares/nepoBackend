@@ -29,6 +29,7 @@ Actualmente, las pruebas en `apps/users/tests/` cubren:
 2.  **Login:** Verificación de credenciales y creación de cookies HttpOnly.
 3.  **Seguridad:** Bloqueo de rutas protegidas para usuarios no autenticados.
 4.  **Roles:** Verificación de que el serializador devuelve el rol correcto.
+5.  **Inventario:** Creación de productos, subida de imágenes, filtrado por categoría y borrado lógico (soft delete).
 
 ## 💡 Mejores Prácticas
 

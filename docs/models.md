@@ -33,3 +33,15 @@ Los roles están integrados en el código para máxima eficiencia:
 | Entrenador | `COACH` | Gestión de atletas y entrenamientos. |
 | Representante | `REPRESENTATIVE` | Tutores legales de los estudiantes. |
 | Estudiante | `STUDENT` | Deportistas de la plataforma. |
+
+## 4. Inventario (`apps/inventory`)
+
+- **Product**: Nombre, cantidad decimal, descripción e imagen.
+- **Category**: Clasificación de productos (M2M con Product).
+- **UnitOfMeasure**: Unidad, Kg, Metros, etc.
+
+## 5. Pagos (`apps/payments`)
+
+- **PaymentMethod**: Cuentas bancarias o billeteras registradas.
+- **Currency**: Monedas soportadas (USD, VES).
+- **PaymentType**: Métodos (Transferencia, Pago Móvil).

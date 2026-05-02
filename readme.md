@@ -9,6 +9,7 @@ Backend robusto para la plataforma Nepo, diseñado para aplicaciones móviles y 
 - **API:** Django Rest Framework (DRF)
 - **Autenticación:** SimpleJWT (JWT + Cookies HttpOnly)
 - **Documentación:** OpenAPI 3.0 con `drf-spectacular`
+- **Multimedia:** Pillow (Procesamiento de imágenes)
 - **Base de Datos:** SQLite (Desarrollo) / PostgreSQL (Recomendado para Producción)
 - **Testing:** Pytest & Pytest-Django
 
@@ -16,10 +17,14 @@ Backend robusto para la plataforma Nepo, diseñado para aplicaciones móviles y 
 
 ```text
 nepoBackend/
-├── apps/               # Aplicaciones locales (users, etc.)
-├── core/               # Configuración central del proyecto
+├── apps/               
+│   ├── users/          # Gestión de usuarios y perfiles
+│   ├── payments/       # Módulo de pagos y tipos de cambio
+│   ├── inventory/      # Módulo de productos y categorías
+│   └── common/         # Utilidades compartidas
+├── core/               # Configuración central (Settings, URLs)
+├── media/              # Archivos subidos (Imágenes)
 ├── docs/               # Documentación detallada
-├── venv/               # Entorno virtual
 ├── manage.py           # Gestor de Django
 └── pytest.ini          # Configuración de tests
 ```
