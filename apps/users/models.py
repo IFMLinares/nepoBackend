@@ -51,14 +51,14 @@ class Profile(models.Model):
         FOREIGN = 'E', 'Extranjero'
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    full_name = models.CharField(max_length=255)
+    full_name = models.CharField(max_length=255, null=True, blank=True)
     document_type = models.CharField(
         max_length=1, 
         choices=DocumentType.choices, 
         default=DocumentType.VENEZUELAN,
         verbose_name="Tipo de Documento"
     )
-    identification = models.CharField(max_length=50, unique=True)
+    identification = models.CharField(max_length=50, unique=True, null=True, blank=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)

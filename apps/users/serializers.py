@@ -19,6 +19,13 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
         model = Profile
         fields = ['full_name', 'document_type', 'identification', 'phone_number', 'profile_picture', 'date_of_birth']
 
+    def to_internal_value(self, data):
+        # Manejar caso en que la imagen viene como string (URL) y no como archivo
+        if 'profile_picture' in data and isinstance(data['profile_picture'], str):
+            data = data.copy()
+            data.pop('profile_picture')
+        return super().to_internal_value(data)
+
 class UserSerializer(serializers.ModelSerializer):
     profile = ProfileSerializer(read_only=True)
     role_display = serializers.CharField(source='get_role_display', read_only=True)

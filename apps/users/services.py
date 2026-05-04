@@ -19,12 +19,14 @@ class UserService:
             role=role
         )
 
-        # Crear perfil
-        Profile.objects.create(
+        # Actualizar perfil (que debería haber sido creado por la señal, o lo creamos aquí)
+        Profile.objects.update_or_create(
             user=user,
-            full_name=full_name,
-            identification=identification,
-            **extra_profile_fields
+            defaults={
+                'full_name': full_name,
+                'identification': identification,
+                **extra_profile_fields
+            }
         )
 
         return user

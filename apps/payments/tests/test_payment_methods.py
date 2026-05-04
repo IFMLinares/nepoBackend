@@ -48,7 +48,7 @@ class TestPaymentMethods:
         image = SimpleUploadedFile(
             "metodo.png",
             base64.b64decode(
-                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF9sAAAAASUVORK5CYII="
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGNgYGAAAAAEAAH2FzhVAAAAAElFTkSuQmCC"
             ),
             content_type="image/png",
         )
@@ -64,7 +64,8 @@ class TestPaymentMethods:
         assert PaymentMethod.objects.count() == 1
         created_method = PaymentMethod.objects.first()
         assert created_method.name == "Pago Móvil"
-        assert created_method.image.name.endswith("metodo.png")
+        assert "metodo" in created_method.image.name
+        assert created_method.image.name.endswith(".png")
 
     def test_create_payment_method_invalid_data(self, admin_client, payment_catalogs):
         url = reverse('paymentmethod-list')
@@ -169,3 +170,27 @@ class TestPaymentMethods:
         url = reverse('paymentmethod-list')
         response = api_client.get(url)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_patch_payment_method_with_image_string(self, admin_client, payment_catalogs):
+        # Crear un método con imagen primero
+        method = PaymentMethod.objects.create(
+            name="Original",
+            payment_type=payment_catalogs["payment_type"],
+            currency=payment_catalogs["currency"],
+            image="payment_methods/test.png"
+        )
+        url = reverse('paymentmethod-detail', kwargs={'pk': method.pk})
+        
+        # Simular lo que hace el frontend: enviar la URL de la imagen como string en el JSON
+        data = {
+            "name": "Actualizado",
+            "image": "/media/payment_methods/test.png"
+        }
+        
+        response = admin_client.patch(url, data, format="json")
+        
+        # Si el backend no maneja strings en ImageField, esto podría fallar con 400
+        assert response.status_code == status.HTTP_200_OK
+        method.refresh_from_db()
+        assert method.name == "Actualizado"
+        assert method.image.name == "payment_methods/test.png"

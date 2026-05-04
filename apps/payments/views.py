@@ -53,7 +53,16 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
         return [permission() for permission in permission_classes]
 
     def get_queryset(self):
-        return payment_method_list()
+        # Los administradores pueden ver todos los métodos, usuarios normales solo activos
+        user = self.request.user
+        include_inactive = user.is_authenticated and getattr(user, 'is_admin', False)
+        
+        # Nota: Ajustamos según la lógica de roles del proyecto. 
+        # Si el modelo User no tiene is_admin, usamos el permiso IsAdmin.
+        from apps.users.models import User
+        is_admin = user.role == User.Role.ADMIN if hasattr(user, 'role') else False
+        
+        return payment_method_list(include_inactive=is_admin)
 
     def perform_create(self, serializer):
         serializer.instance = payment_method_create(**serializer.validated_data)

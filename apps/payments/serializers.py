@@ -24,6 +24,14 @@ class PaymentMethodSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    def to_internal_value(self, data):
+        # Si la imagen viene como string (ej. la URL que manda el frontend), la quitamos
+        # para que no falle la validación del ImageField y se mantenga la imagen actual.
+        if 'image' in data and isinstance(data['image'], str):
+            data = data.copy()
+            data.pop('image')
+        return super().to_internal_value(data)
+
     def validate_name(self, value):
         if len(value) < 3:
             raise serializers.ValidationError("El nombre debe tener al menos 3 caracteres.")

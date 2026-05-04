@@ -7,12 +7,16 @@ from rest_framework import status, permissions
 from drf_spectacular.utils import extend_schema
 
 User = get_user_model()
+from .models import Profile
 from .serializers import UserRegistrationSerializer, UserSerializer, ProfileUpdateSerializer
 from .services import UserService
 from .permissions import IsAdmin
 
+from rest_framework.parsers import MultiPartParser, JSONParser
+
 class MeView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, JSONParser]
 
     @extend_schema(tags=['Auth'], responses={200: UserSerializer})
     def get(self, request):
@@ -21,7 +25,8 @@ class MeView(APIView):
 
     @extend_schema(tags=['Auth'], request=ProfileUpdateSerializer, responses={200: UserSerializer})
     def patch(self, request):
-        serializer = ProfileUpdateSerializer(request.user.profile, data=request.data, partial=True)
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(UserSerializer(request.user).data)
